@@ -175,12 +175,14 @@ export function customQuery<
       );
     }
     const handler = fn.handler ?? fn;
-    return query({
+    const registeredFn = query({
       handler: async (ctx, args: any) => {
         const { ctx: modCtx, args: modArgs } = await inputMod(ctx, args);
         return await handler({ ...ctx, ...modCtx }, { ...args, ...modArgs });
       },
     });
+    (registeredFn as any).handler = handler;
+    return registeredFn;
   }
 
   return customQueryBuilder as CustomBuilder<
@@ -287,12 +289,14 @@ export function customMutation<
       );
     }
     const handler = fn.handler ?? fn;
-    return mutation({
+    const registeredFn = mutation({
       handler: async (ctx, args: any) => {
         const { ctx: modCtx, args: modArgs } = await inputMod(ctx, args);
         return await handler({ ...ctx, ...modCtx }, { ...args, ...modArgs });
       },
     });
+    (registeredFn as any).handler = handler;
+    return registeredFn;
   }
 
   return customMutationBuilder as CustomBuilder<
@@ -403,12 +407,14 @@ export function customAction<
       );
     }
     const handler = fn.handler ?? fn;
-    return action({
+    const registeredFn = action({
       handler: async (ctx, args: any) => {
         const { ctx: modCtx, args: modArgs } = await inputMod(ctx, args);
         return await handler({ ...ctx, ...modCtx }, { ...args, ...modArgs });
       },
     });
+    (registeredFn as any).handler = handler;
+    return registeredFn;
   }
 
   return customActionBuilder as CustomBuilder<
@@ -529,7 +535,14 @@ export type CustomBuilder<
         : [ObjectType<ModArgsValidator>]
     >,
     ReturnValue
-  >;
+  > & {
+    handler: (
+      ctx: Overwrite<InputCtx, ModCtx>,
+      ...args: OneOrZeroArgs extends [infer A]
+        ? [Expand<A & ModMadeArgs>]
+        : [ModMadeArgs]
+    ) => ReturnValue;
+  };
 };
 
 export type CustomCtx<Builder> =
